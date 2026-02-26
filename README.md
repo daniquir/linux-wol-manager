@@ -15,18 +15,18 @@ Most Linux network drivers reset the Wake-on-LAN status to disabled (d) every ti
 ## 🛠️ Installation & Usage
 
 ### 1. Clone the repository
-\`\`\`bash
+```bash
 git clone https://github.com/daniquir/linux-wol-manager.git
 cd linux-wol-manager
-\`\`\`
+```
 
 ### 2. Run the configurator
 The script requires root privileges to interact with network hardware and system services.
 
-\`\`\`bash
+```bash
 chmod +x install.sh
 sudo ./install.sh
-\`\`\`
+```
 
 ### 🎮 Interface Controls
 
@@ -51,10 +51,10 @@ sudo ./install.sh
 ---
 
 ## 🧪 How to Test
-1. **Get the MAC Address**: Check the script's output or run \`ip link\`.
+1. **Get the MAC Address**: Check the script's output or run `ip link`.
 2. **Power Off**: Shut down your Linux computer.
 3. **Send Packet**: From another device on the same network:
-    * **Linux**: \`sudo apt install wakeonlan && wakeonlan [MAC_ADDRESS]\`
+    * **Linux**: `sudo apt install wakeonlan && wakeonlan [MAC_ADDRESS]`
     * **Windows**: Use "WakeMeOnLan" or similar.
 
 ---
@@ -62,7 +62,7 @@ sudo ./install.sh
 ## 📄 Technical Details: wol.service
 The script generates a standard systemd unit:
 
-\`\`\`ini
+```ini
 [Unit]
 Description=Enable Wake-on-LAN persistently
 After=network-online.target
@@ -74,7 +74,7 @@ ExecStartPre=/sbin/ethtool -s eth0 wol g
 
 [Install]
 WantedBy=multi-user.target
-\`\`\`
+```
 
 ---
 
