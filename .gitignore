@@ -1,0 +1,18 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# Shell & Editors
+*.swp
+*.swo
+*~
+.bash_history
+
+# Script specific backups and logs
+*.bak
+wol.service.bak
+*.log
+
+# Folders
+.idea/
+.vscode/
