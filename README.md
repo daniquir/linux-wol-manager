@@ -16,7 +16,7 @@ Most Linux network drivers reset the Wake-on-LAN status to disabled (d) every ti
 
 ### 1. Clone the repository
 \`\`\`bash
-git clone https://github.com/YOUR_USERNAME/linux-wol-manager.git
+git clone https://github.com/daniquir/linux-wol-manager.git
 cd linux-wol-manager
 \`\`\`
 
