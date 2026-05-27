@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ShellCheck
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          severity: warning
+          scandir: '.'
+          additional_files: install.sh
+
+      - name: Bash syntax check
+        run: bash -n install.sh

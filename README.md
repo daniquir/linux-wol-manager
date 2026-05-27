@@ -1,82 +1,129 @@
-# ⚡ Linux Wake-on-LAN (WoL) Manager
+# Linux Wake-on-LAN (WoL) Manager
 
-An interactive CLI tool to manage and persist **Wake-on-LAN (WoL)** settings across reboots on Linux systems (Mint, Ubuntu, Debian, Arch, and others using systemd).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Shell](https://img.shields.io/badge/shell-bash-blue.svg)](install.sh)
 
-## 📖 Summary
-Most Linux network drivers reset the Wake-on-LAN status to disabled (d) every time the system powers down or reboots. Even if you enable it manually with ethtool, the setting is lost during the next boot cycle.
+An interactive CLI tool to manage and persist **Wake-on-LAN (WoL)** settings across reboots on Linux systems (Mint, Ubuntu, Debian, Arch, Fedora, and others using systemd).
 
-### ⚙️ How it Works
-1. **Hardware Discovery**: Scans /sys/class/net to identify physical interfaces, filtering out virtual ones.
-2. **Live Detection**: Queries each card using ethtool to show current status.
-3. **Persistence**: Creates a systemd service at /etc/systemd/system/wol.service to re-apply settings at boot.
+## Summary
+
+Most Linux network drivers reset Wake-on-LAN to disabled (`d`) on power-off or reboot. Even if you enable it manually with `ethtool`, the setting is usually lost on the next boot.
+
+### How it works
+
+1. **Hardware discovery** — Scans `/sys/class/net` for physical interfaces, filtering out common virtual/tunnel devices.
+2. **Live detection** — Queries each card with `ethtool` and detects whether magic-packet mode (`g`) is active.
+3. **Persistence** — Creates a systemd oneshot unit at `/etc/systemd/system/wol.service` to re-apply settings at boot.
 
 ---
 
-## 🛠️ Installation & Usage
+## Installation and usage
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/daniquir/linux-wol-manager.git
 cd linux-wol-manager
 ```
 
 ### 2. Run the configurator
-The script requires root privileges to interact with network hardware and system services.
+
+The script requires root privileges to modify network hardware flags and systemd units.
 
 ```bash
 chmod +x install.sh
 sudo ./install.sh
 ```
 
-### 🎮 Interface Controls
+### Interface controls
 
 | Key | Action |
 | :--- | :--- |
-| **W / S** or **Arrows** | Move the cursor up/down |
-| **Spacebar** | Toggle between **ENABLE [X]** and **DISABLE [ ]** |
-| **Enter** | Apply settings, update the system service, and exit |
+| **W / S** or **arrow keys** | Move the cursor up/down |
+| **Space** | Toggle **ENABLE [X]** / **DISABLE [ ]** |
+| **Enter** | Apply settings, update the systemd service, and exit |
 
 ---
 
-## 📋 Requirements
-* **Operating System**: Any Linux distribution using systemd.
-* **ethtool**: Core dependency. The script offers to install it if missing.
-* **Root Privileges**: Needed to modify system services and network flags.
-* **Motherboard Support**:
-    * Enable **"Wake on LAN"** or **"PCI-E Resume"** in your BIOS/UEFI.
-    * Disable **"Deep Sleep"** or **"ErP Ready"** (to keep the NIC powered).
+## Requirements
 
-
-
----
-
-## 🧪 How to Test
-1. **Get the MAC Address**: Check the script's output or run `ip link`.
-2. **Power Off**: Shut down your Linux computer.
-3. **Send Packet**: From another device on the same network:
-    * **Linux**: `sudo apt install wakeonlan && wakeonlan [MAC_ADDRESS]`
-    * **Windows**: Use "WakeMeOnLan" or similar.
+| Requirement | Notes |
+| :--- | :--- |
+| **OS** | Linux with **systemd** |
+| **ethtool** | Installed automatically when possible (`apt`, `dnf`, `pacman`, `zypper`) |
+| **Privileges** | Run as **root** (`sudo`) |
+| **BIOS/UEFI** | Enable **Wake on LAN** / **PCI-E resume**; disable **Deep Sleep** / **ErP Ready** where it cuts NIC power |
 
 ---
 
-## 📄 Technical Details: wol.service
-The script generates a standard systemd unit:
+## How to test
+
+1. Note the MAC address from `ip link` or the script output.
+2. Shut down the target machine (not just suspend, unless your hardware supports WoL from sleep).
+3. From another device on the same LAN, send a magic packet:
+   - **Linux:** `sudo apt install wakeonlan && wakeonlan AA:BB:CC:DD:EE:FF`
+   - **Windows:** [WakeMeOnLan](https://www.nirsoft.net/utils/wake_on_lan.html) or similar
+
+---
+
+## Generated `wol.service`
+
+The script writes one `ExecStartPre` line per enabled interface, for example:
 
 ```ini
 [Unit]
 Description=Enable Wake-on-LAN persistently
 After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=oneshot
 ExecStart=/bin/true
-ExecStartPre=/sbin/ethtool -s eth0 wol g
+ExecStartPre=/usr/sbin/ethtool -s enp3s0 wol g
 
 [Install]
 WantedBy=multi-user.target
 ```
 
+To inspect or troubleshoot:
+
+```bash
+systemctl status wol.service
+journalctl -u wol.service -b
+```
+
 ---
 
-## 📜 License
-This project is licensed under the MIT License.
+## Uninstall
+
+```bash
+sudo systemctl disable wol.service --now
+sudo rm -f /etc/systemd/system/wol.service
+sudo systemctl daemon-reload
+```
+
+Or run the script again and deselect all interfaces (it removes the unit automatically).
+
+---
+
+## Limitations
+
+- **Driver support** — Not all NICs support WoL; check `ethtool <iface>` for `Supports Wake-on`.
+- **NetworkManager** — Some setups may reset `ethtool` flags when the link is managed; if WoL stops working after NM events, you may need extra NM dispatcher hooks (out of scope for this tool).
+- **Wi-Fi** — WoL over wireless is uncommon; wired Ethernet is the typical use case.
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Security
+
+See [SECURITY.md](SECURITY.md).
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+Copyright (c) 2026 Daniel Quirant
